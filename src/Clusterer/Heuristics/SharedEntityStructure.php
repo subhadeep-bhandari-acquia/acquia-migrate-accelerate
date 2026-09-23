@@ -178,6 +178,20 @@ final class SharedEntityStructure implements IndependentHeuristicInterface, Heur
         'fivestar_vote_type',
       ]);
     }
+    // Comment field storage, field instance and (form) display migrations
+    // resolve to the "node" entity type above (comment fields/displays are
+    // shared across all node bundles), but they also legitimately depend on
+    // the migration(s) that create the comment bundle and its field(s),
+    // since comment fields/displays are attached through those. Those
+    // dependencies are technical prerequisites, not a per-(node)-bundle
+    // split of this migration.
+    if ($source_entity_type === 'node' && strpos($migration_plugin->getBaseId(), 'd7_comment_') === 0) {
+      $dependencies = array_diff($dependencies, [
+        'd7_comment_type',
+        'd7_comment_field',
+        'd7_comment_field_instance',
+      ]);
+    }
     $dependencyless = empty($dependencies);
 
     if ($entity_type_has_bundles && !$dependencyless) {
@@ -194,7 +208,11 @@ final class SharedEntityStructure implements IndependentHeuristicInterface, Heur
     $source_config = $migration_plugin->getSourceConfiguration();
     $field_entity_type_id = $source_config['entity_type'] ?? NULL;
     $dest_entity_type_id = self::getDestinationEntityTypeId($migration_plugin);
-    $configuration_for_dest_entity_type_id = $source_config['constants']['target_type'] ?? NULL;
+    // component_entity_display/component_entity_form_display destinations
+    // (e.g. the comment field's entity/form display migrations) carry their
+    // target entity type in constants.entity_type rather than
+    // constants.target_type.
+    $configuration_for_dest_entity_type_id = $source_config['constants']['target_type'] ?? $source_config['constants']['entity_type'] ?? NULL;
     // Paragraph, field collection or multifield field config migrations have
     // 'paragraphs_item', 'field_collection_item' or 'multifield' source entity
     // type.
