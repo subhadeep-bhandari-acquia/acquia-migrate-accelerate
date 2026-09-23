@@ -37,6 +37,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\Core\Routing\LocalRedirectResponse;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\migrate\Plugin\MigrationInterface;
@@ -275,6 +276,24 @@ final class HttpApi {
   }
 
   /**
+   * Runs a stale-data check now and redirects back to the referring page.
+   *
+   * This exists purely to give the dashboard a real, clickable UI element for
+   * triggering an immediate check: the frontend's own consumption of the
+   * stale-data link is an automatic background fetch with no button, so this
+   * route is invoked from a plain server-rendered link injected via
+   * acquia_migrate_page_top(), not from the SPA itself.
+   *
+   * @return \Drupal\Core\Routing\LocalRedirectResponse
+   *   A redirect back to where the request came from.
+   */
+  public function checkForUpdates(Request $request): LocalRedirectResponse {
+    $this->migrationFingerprinter->compute();
+    $destination = $request->headers->get('referer') ?: Url::fromRoute('acquia_migrate.migrations.dashboard')->toString();
+    return new LocalRedirectResponse($destination);
+  }
+
+  /**
    * Returns a collection of migrations with stale imported data.
    *
    * @return \Symfony\Component\HttpFoundation\JsonResponse
@@ -295,7 +314,7 @@ final class HttpApi {
         ];
       }
     }
-    return JsonResponse::create([
+    return new JsonResponse([
       'data' => $data,
       'links' => [
         'self' => [
@@ -317,7 +336,7 @@ final class HttpApi {
     // This concatenates all resource objects, source modules and
     // recommendations into a single array and remove all the array keys so that
     // they will be serialized as a JSON array instead of an object.
-    return JsonResponse::create([
+    return new JsonResponse([
       'data' => array_merge(
         $this->moduleAuditor->getSourceModules(),
         $this->moduleAuditor->getRecommendations()
@@ -411,17 +430,18 @@ final class HttpApi {
       $total_import_count = array_reduce($resource_objects, function (int $sum, array $resource_object) : int {
         return $sum + $resource_object['attributes']['importedCount'];
       }, 0);
-      if ($this->migrationFingerprinter->recomputeRecommended()) {
-        $stale_data_url = Url::fromRoute('acquia_migrate.api.stale_data')
-          ->setAbsolute()
-          ->toString(TRUE);
-        $cacheability->addCacheableDependency($stale_data_url);
-        $document['links']['stale-data'] = [
-          "href" => $stale_data_url->getGeneratedUrl(),
-          "title" => $this->t('Check for updates'),
-          "rel" => UriDefinitions::LINK_REL_STALE_DATA,
-        ];
-      }
+      // Always expose the stale-data link so the client can trigger a check
+      // on demand, in addition to the ten-minute auto-recommend cadence in
+      // MigrationFingerprinter::recomputeRecommended().
+      $stale_data_url = Url::fromRoute('acquia_migrate.api.stale_data')
+        ->setAbsolute()
+        ->toString(TRUE);
+      $cacheability->addCacheableDependency($stale_data_url);
+      $document['links']['stale-data'] = [
+        "href" => $stale_data_url->getGeneratedUrl(),
+        "title" => $this->t('Check for updates'),
+        "rel" => UriDefinitions::LINK_REL_STALE_DATA,
+      ];
       if (!$this->coordinator->hasActiveOperation()) {
         // First: ensure that we're always working on an optimized database.
         if (MacGyver::detectWhetherActionIsNeeded()) {
@@ -517,7 +537,7 @@ final class HttpApi {
         'data-distinct-migrations' => (int) $distinct_migration_count_total,
       ];
     }
-    $response = CacheableJsonResponse::create($document, 200, static::$defaultResponseHeaders);
+    $response = new CacheableJsonResponse($document, 200, static::$defaultResponseHeaders);
     $response->addCacheableDependency($cacheability);
 
     Timer::stop(Timers::RESPONSE_MIGRATIONS_COLLECTION);
@@ -552,7 +572,7 @@ final class HttpApi {
     $cacheability->addCacheContexts(static::$defaultCacheContexts);
     $resource_object = Migration::toResourceObject($migration, $cacheability);
     $sparse = $this->getSparseFieldsetFunction($request);
-    $response = CacheableJsonResponse::create([
+    $response = new CacheableJsonResponse([
       'data' => $sparse($resource_object),
       'links' => [
         'self' => [
@@ -584,7 +604,7 @@ final class HttpApi {
     $this->validateRequestHeaders($request);
 
     if (!$request->query->has('byOffset') && !$request->query->has('byUrl')) {
-      return JsonResponse::create([
+      return new JsonResponse([
         'errors' => [
           [
             'code' => (string) 400,
@@ -660,7 +680,7 @@ final class HttpApi {
       $source_only_fields = $this->migrationMappingViewer->getSourceOnlyFields($mapped_source_columns, $data_migration_plugin);
     }
     catch (\InvalidArgumentException $e) {
-      return JsonResponse::create([
+      return new JsonResponse([
         'errors' => [
           [
             'code' => (string) $e->getCode(),
@@ -866,10 +886,10 @@ final class HttpApi {
 
       $this->migrationMappingManipulator->dropSourceField($data_migration_plugin, $destination_field_name);
 
-      return JsonResponse::create('', 204, static::$defaultResponseHeaders);
+      return new JsonResponse('', 204, static::$defaultResponseHeaders);
     }
     catch (\InvalidArgumentException $e) {
-      return JsonResponse::create([
+      return new JsonResponse([
         'errors' => [
           [
             'code' => (string) $e->getCode(),
@@ -923,10 +943,10 @@ final class HttpApi {
 
       $this->migrationMappingManipulator->revertProcessPipelineOverride($data_migration_plugin, $destination_field_name);
 
-      return JsonResponse::create('', 204, static::$defaultResponseHeaders);
+      return new JsonResponse('', 204, static::$defaultResponseHeaders);
     }
     catch (\InvalidArgumentException $e) {
-      return JsonResponse::create([
+      return new JsonResponse([
         'errors' => [
           [
             'code' => (string) $e->getCode(),
@@ -963,7 +983,7 @@ final class HttpApi {
     }
     // @todo Allow PATCHing of more fields than only the "completed" and "skipped" attributes.
     if (isset($data['relationships']) || !empty(array_diff(array_keys($data['attributes']), ['overridden']))) {
-      return JsonResponse::create([
+      return new JsonResponse([
         'errors' => [
           [
             'code' => (string) 403,
@@ -982,7 +1002,7 @@ final class HttpApi {
     foreach ($data['attributes'] as $attribute => $value) {
       assert(in_array($attribute, ['overridden'], TRUE));
       if (!is_bool($value)) {
-        return JsonResponse::create([
+        return new JsonResponse([
           'errors' => [
             [
               'code' => (string) 403,
@@ -1015,7 +1035,7 @@ final class HttpApi {
         }
       }
       catch (\InvalidArgumentException $e) {
-        return JsonResponse::create([
+        return new JsonResponse([
           'errors' => [
             [
               'code' => (string) $e->getCode(),
@@ -1027,7 +1047,7 @@ final class HttpApi {
       }
     }
 
-    return JsonResponse::create('', 204, static::$defaultResponseHeaders);
+    return new JsonResponse('', 204, static::$defaultResponseHeaders);
   }
 
   /**
@@ -1059,7 +1079,7 @@ final class HttpApi {
       'skipped',
     ];
     if (isset($data['relationships']) || !empty(array_diff(array_keys($data['attributes']), $patchable_attributes))) {
-      return JsonResponse::create([
+      return new JsonResponse([
         'errors' => [
           [
             'code' => (string) 403,
@@ -1081,7 +1101,7 @@ final class HttpApi {
 
       // Only allow stopping the current activity.
       if ($new_activity !== Migration::ACTIVITY_IDLE) {
-        return JsonResponse::create([
+        return new JsonResponse([
           'errors' => [
             [
               'code' => (string) 403,
@@ -1097,7 +1117,7 @@ final class HttpApi {
         ], 403, static::$defaultResponseHeaders);
       }
       elseif ($migration->getActivity() === Migration::ACTIVITY_IDLE) {
-        return JsonResponse::create([
+        return new JsonResponse([
           'errors' => [
             [
               'code' => (string) 409,
@@ -1141,7 +1161,7 @@ final class HttpApi {
     foreach ($data['attributes'] as $attribute => $value) {
       assert(in_array($attribute, ['completed', 'skipped'], TRUE));
       if (!is_bool($value)) {
-        return JsonResponse::create([
+        return new JsonResponse([
           'errors' => [
             [
               'code' => (string) 403,
@@ -1162,7 +1182,7 @@ final class HttpApi {
         ->execute();
     }
 
-    return JsonResponse::create('', 204, static::$defaultResponseHeaders);
+    return new JsonResponse('', 204, static::$defaultResponseHeaders);
   }
 
   /**
@@ -1267,7 +1287,7 @@ final class HttpApi {
       $config->save();
     }
 
-    return JsonResponse::create(NULL, 204, array_merge(
+    return new JsonResponse(NULL, 204, array_merge(
       static::$defaultResponseHeaders,
       [
         'Content-Type' => 'application/vnd.api+json; ext="https://jsonapi.org/ext/atomic"',
@@ -1379,7 +1399,7 @@ final class HttpApi {
     // This lock will extended for the duration of this batch process.
     // @see \Drupal\acquia_migrate\Controller\HttpApi::migrationProcess()
     if ($this->coordinator->hasActiveOperation() || !$this->coordinator->startOperation()) {
-      return JsonResponse::create([
+      return new JsonResponse([
         'errors' => [
           [
             'code' => (string) 400,
@@ -1418,7 +1438,7 @@ final class HttpApi {
     $migration_id = $request->get('migrationId');
     // @todo validate that the requested migration ID exists.
     $batch_url = $this->getMigrationProcessUrl($migration_id, $migration_action)->setAbsolute();
-    return JsonResponse::create([
+    return new JsonResponse([
       'meta' => [
         'note' => 'The migration process has been started, follow the `next` link to continue processing it.',
       ],
@@ -1464,7 +1484,7 @@ final class HttpApi {
     $batch_url = Url::fromRoute('acquia_migrate.api.migration.process', [
       'process_id' => $batch_status->getId(),
     ])->setAbsolute();
-    return JsonResponse::create([
+    return new JsonResponse([
       'meta' => [
         'note' => 'The migration process has been started, follow the `next` link to continue processing it.',
       ],
@@ -1493,7 +1513,7 @@ final class HttpApi {
     $batch_url = Url::fromRoute('acquia_migrate.api.migration.process', [
       'process_id' => $batch_status->getId(),
     ])->setAbsolute();
-    return JsonResponse::create([
+    return new JsonResponse([
       'meta' => [
         'note' => 'The database optimization process has been started, follow the `next` link to continue processing it.',
       ],
@@ -1531,7 +1551,7 @@ final class HttpApi {
     $batch_status = $this->migrationBatchManager->isMigrationBatchOngoing($process_id);
     if ($batch_status instanceof BatchUnknown) {
       // @todo should this be a cacheable response? If so, we'll need to mint and invalidate a cache tag for it.
-      return JsonResponse::create(NULL, 404, static::$defaultResponseHeaders);
+      return new JsonResponse(NULL, 404, static::$defaultResponseHeaders);
     }
     $data = [
       'type' => 'migrationProcess',
@@ -1563,7 +1583,7 @@ final class HttpApi {
     else {
       $this->coordinator->stopOperation();
     }
-    return JsonResponse::create([
+    return new JsonResponse([
       'data' => $data,
       'links' => $links,
     ], 200, static::$defaultResponseHeaders);

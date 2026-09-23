@@ -12,7 +12,7 @@ use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
@@ -90,10 +90,10 @@ class CacheableAcquiaMigrateResponseSubscriber implements EventSubscriberInterfa
   /**
    * Calculates and etag for an Acquia Migrate response.
    *
-   * @param \Symfony\Component\HttpKernel\Event\FilterResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   The event to process.
    */
-  public function onResponseBeforeDynamicPageCacheSubscriber(FilterResponseEvent $event) {
+  public function onResponseBeforeDynamicPageCacheSubscriber(ResponseEvent $event) {
     if (!$this->shouldAddEtag($event)) {
       return;
     }
@@ -116,12 +116,12 @@ class CacheableAcquiaMigrateResponseSubscriber implements EventSubscriberInterfa
    * must-revalidate, no-cache, private` responses, to prevent the browser from
    * having to download the same data twice.
    *
-   * @param \Symfony\Component\HttpKernel\Event\FilterResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   The event to process.
    *
    * @see https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching
    */
-  public function onResponseAfterFinishResponseSubscriber(FilterResponseEvent $event) {
+  public function onResponseAfterFinishResponseSubscriber(ResponseEvent $event) {
     $request = $event->getRequest();
     if (!$this->shouldAddEtag($event)) {
       return;
@@ -161,10 +161,10 @@ class CacheableAcquiaMigrateResponseSubscriber implements EventSubscriberInterfa
    * is not cacheable (f.e. 'POST', 'PATCH', or 'DELETE'), invalidate all
    * Acquia Migrate responses.
    *
-   * @param \Symfony\Component\HttpKernel\Event\FilterResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   The event to process.
    */
-  public function invalidateAcquiaMigrateResponsesOnMutate(FilterResponseEvent $event) {
+  public function invalidateAcquiaMigrateResponsesOnMutate(ResponseEvent $event) {
     if (is_string($this->routeMatch->getRouteName()) && strpos($this->routeMatch->getRouteName(), 'acquia_migrate') === 0 && !$event->getRequest()->isMethodCacheable()) {
       // The cache tags array is intentionally left empty.
       // @see \Drupal\acquia_migrate\Cache\AcquiaMigrateCacheTagsInvalidator::invalidateTags()
@@ -175,14 +175,14 @@ class CacheableAcquiaMigrateResponseSubscriber implements EventSubscriberInterfa
   /**
    * Whether this subscriber applies to the current request.
    *
-   * @param \Symfony\Component\HttpKernel\Event\FilterResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   The event to check.
    *
    * @return bool
    *   TRUE if the current request is for an Acquia Migrate controller route and
    *   if the request method is cacheable, FALSE otherwise.
    */
-  private function shouldAddEtag(FilterResponseEvent $event) {
+  private function shouldAddEtag(ResponseEvent $event) {
     return is_string($this->routeMatch->getRouteName()) && strpos($this->routeMatch->getRouteName(), 'acquia_migrate') === 0 && $event->getRequest()->isMethodCacheable();
   }
 

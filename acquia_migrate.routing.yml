@@ -8,6 +8,16 @@ acquia_migrate.api.stale_data:
     _permission: 'administer migrations'
   options:
     no_cache: 'TRUE'
+acquia_migrate.check_for_updates:
+  path: /acquia-migrate-accelerate/check-for-updates
+  methods: ['GET']
+  defaults:
+    _controller: controller.acquia_migrate.http_api:checkForUpdates
+  requirements:
+    _permission: 'administer migrations'
+    _csrf_token: 'TRUE'
+  options:
+    no_cache: 'TRUE'
 acquia_migrate.api.module.info:
   path: &module_info_api_source /acquia-migrate-accelerate/api/module-info
   methods: ['GET']

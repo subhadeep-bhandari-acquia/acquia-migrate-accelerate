@@ -87,11 +87,11 @@ final class PublicAcknowledgementForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $html = <<<HTML
 <p>This environment was created specifically for migrating from Drupal 7 to
-Drupal 9. It is an Acquia Cloud environment like any other, which means it's
+the destination Drupal site. It is an Acquia Cloud environment like any other, which means it's
 publicly accessible.</p>
 <p>That means it is easy for anybody in your organization who is given the URL
 to help out with the migration — including people who are not developers.</p>
-<p>Initially, there will not be any data in this Drupal 9 site. As you migrate
+<p>Initially, there will not be any data in this destination site. As you migrate
 more data from Drupal 7 over, chances are there will be sensitive information in
 there too. If any sensitive information is stored in your Drupal 7 site, then
 please <a href="https://docs.acquia.com/cloud-platform/arch/security/nonprod/">

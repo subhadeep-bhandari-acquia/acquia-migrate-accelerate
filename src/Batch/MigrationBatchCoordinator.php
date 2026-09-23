@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace Drupal\acquia_migrate\Batch;
 
-use Drupal\Core\Http\RequestStack;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\State\StateInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Coordinates migration batches: only one session at a time can run them.
@@ -88,7 +88,7 @@ final class MigrationBatchCoordinator {
    *   A persistent lock backend instance.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state service.
-   * @param \Drupal\Core\Http\RequestStack $request_stack
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
    */
   public function __construct(LockBackendInterface $persistent_lock, StateInterface $state, RequestStack $request_stack) {
@@ -158,7 +158,11 @@ final class MigrationBatchCoordinator {
       throw new \LogicException('An operation can only be started if none is active.');
     }
 
-    $success = $this->persistentLock->acquire(static::ACTIVE_BATCH, min(30, ini_get('max_execution_time')));
+    // A PHP max_execution_time of 0 means "unlimited" (common with PHP-FPM),
+    // not "immediately expire" — guard against that before feeding it to
+    // min().
+    $max_execution_time = (int) ini_get('max_execution_time');
+    $success = $this->persistentLock->acquire(static::ACTIVE_BATCH, $max_execution_time > 0 ? min(30, $max_execution_time) : 30);
 
     if ($success) {
       // Track which session triggered the active batch.
@@ -193,7 +197,13 @@ final class MigrationBatchCoordinator {
       throw new \LogicException('An operation can only be extended by the session that created it. Current session ID: `' . $this->sessionId . '`, controlling session ID: `' . $this->controllingSessionId . '`.');
     }
 
-    $success = $this->persistentLock->acquire(static::ACTIVE_BATCH, $seconds ?? ini_get('max_execution_time'));
+    if ($seconds === NULL) {
+      // A PHP max_execution_time of 0 means "unlimited" (common with
+      // PHP-FPM), not "immediately expire".
+      $max_execution_time = (int) ini_get('max_execution_time');
+      $seconds = $max_execution_time > 0 ? $max_execution_time : 30;
+    }
+    $success = $this->persistentLock->acquire(static::ACTIVE_BATCH, $seconds);
 
     // Extending an operation should always succeed. Still, race conditions are
     // not impossible (for example, a slow network), so the caller must still

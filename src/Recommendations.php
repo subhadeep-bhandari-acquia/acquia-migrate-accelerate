@@ -17,7 +17,7 @@ use Drupal\Core\State\StateInterface;
 final class Recommendations {
 
   /**
-   * State key for storing the initial info that generated this Drupal 9 site.
+   * State key for storing the initial info that generated this destination site.
    *
    * @const string
    */
@@ -181,7 +181,7 @@ final class Recommendations {
    * Gets destination modules that the vetted recommendations install.
    *
    * @return string[]
-   *   A list of destination (Drupal 9) module names.
+   *   A list of destination module names.
    */
   public function getVettedDestinationModules() : array {
     $recommendations = $this->getVetted();
@@ -193,13 +193,13 @@ final class Recommendations {
     // default as vetted. The destination site will get these by default even
     // when the source site does not have them installed (which causes them to
     // not end up in the stored recommendations).
-    // Last update: drupal/core:9.4.5.
+    // Last update: drupal/core:10.5 / 11.x Standard profile.
     $modules[] = 'automated_cron';
     $modules[] = 'big_pipe';
     $modules[] = 'block';
     $modules[] = 'block_content';
     $modules[] = 'breakpoint';
-    $modules[] = 'ckeditor';
+    $modules[] = 'ckeditor5';
     $modules[] = 'comment';
     $modules[] = 'config';
     $modules[] = 'contact';

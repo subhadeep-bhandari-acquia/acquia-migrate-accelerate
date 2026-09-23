@@ -9,7 +9,6 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\migrate\Plugin\Migration as MigrationPlugin;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -19,7 +18,6 @@ final class SharedEntityData implements DependentHeuristicWithComputedDependentC
 
   use EntityRelatedHeuristicTrait;
   use StringTranslationTrait;
-  use ContainerAwareTrait;
 
   /**
    * Base plugin IDs of paragraph entity migrations.

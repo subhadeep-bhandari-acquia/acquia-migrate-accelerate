@@ -16,7 +16,7 @@ use Drupal\Core\Database\SchemaObjectExistsException;
  * THEY WHO JOIN THE UNJOINABLE HAS ARRIVED.
  *
  * Introducing the Sourceination: the Drupal 7 Source database that lives
- * hidden in plain sight int the Drupal 9 Destination database, thanks to the
+ * hidden in plain sight int the destination database, thanks to the
  * age-old magic of table prefixes. We affectionately call it Database
  * Injection ("SQL Injection" pales in comparison).
  *
@@ -67,12 +67,12 @@ final class MacGyver {
    * @var string[]
    */
   const EXCLUDED_TABLES = [
-    // D7 accesslog is irrelevant in D9.
+    // D7 accesslog is irrelevant on the destination.
     'accesslog',
     // Caches are rebuilt, not migrated.
     'cache_.+',
     // Migration metadata from migrations into Drupal 7 are irrelevant when
-    // migrating to Drupal 9.
+    // migrating to the destination site.
     'migrate_map_.+',
     'migrate_message_.+',
     // Avoid copying search indices.

@@ -520,7 +520,7 @@ final class MigrationPreviewer implements TrustedCallbackInterface {
    */
   private function filterResponse(Request $request, Response $response) {
     $event = new ResponseEvent($this->httpKernel, $request, HttpKernelInterface::SUB_REQUEST, $response);
-    $this->eventDispatcher->dispatch(KernelEvents::RESPONSE, $event);
+    $this->eventDispatcher->dispatch($event, KernelEvents::RESPONSE);
     $filtered_response = $event->getResponse();
     return $filtered_response;
   }

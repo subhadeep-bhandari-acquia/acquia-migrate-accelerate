@@ -2,10 +2,10 @@
 
 ## What's this then?
 
-This is a Drupal 9 module that provides a set of tools for accelerating a Drupal 7 → Drupal 9 migration.
+This is a Drupal module that provides a set of tools for accelerating a Drupal 7 → Drupal 10/11 migration.
 
 ### Features:
-- Provides a React-based UI for performing Drupal 7 → 9 migrations
+- Provides a React-based UI for performing Drupal 7 → 10/11 migrations
 - Migration Dashboard provides an overview of overall data migration progress
 - Supports Import/Rollback/Rollback and Import of migrations
 - Is smart about dependencies: dependencies must be imported first
@@ -19,7 +19,7 @@ Note: This step will no longer be required once the environment is generated fro
 
 You only need to set the private file path if applicable.
 
-Open your Drupal 9 site's `sites/default/settings.php`, create a new `$databases['migrate']` entry (the key must be named `migrate`!), and specify the Drupal 7 source database. Also specify the **base path** for your Drupal 7 site (so that `sites/default/files` is a subdirectory). Like so:
+Open your destination Drupal site's `sites/default/settings.php`, create a new `$databases['migrate']` entry (the key must be named `migrate`!), and specify the Drupal 7 source database. Also specify the **base path** for your Drupal 7 site (so that `sites/default/files` is a subdirectory). Like so:
 
 ```
     $databases['migrate']['default'] = array (

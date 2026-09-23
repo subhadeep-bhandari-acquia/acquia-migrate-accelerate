@@ -26,11 +26,11 @@ use Drupal\migrate\Plugin\RequirementsInterface;
  * This is the very heart of Acquia Migrate Accelerate, because it "clusters"
  * the numerous migration plugins that exist into "Drupal Site Builder" concepts
  * that make it significantly easier for non-experts to perform migrations from
- * Drupal 7 to Drupal 9.
+ * Drupal 7 to the destination site.
  *
  * A "cluster" is a list of migration plugins plus an associated label that
  * describes which site builder concept these migration plugins are able to
- * migrate into Drupal 9.
+ * migrate into on the destination site.
  *
  * This class has migration plugins both as its input and its output. In the
  * output, it is guaranteed that @code getMetadata('cluster') @endcode is

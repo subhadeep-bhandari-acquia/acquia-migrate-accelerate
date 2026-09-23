@@ -53,7 +53,7 @@ services:
     arguments:
       - '@http_kernel'
       - '@batch.storage'
-      - '@app.root'
+      - '%app.root%'
       - '@acquia_migrate.migration_repository'
       - '@plugin.manager.migration'
       - '@acquia_migrate.coordinator'
@@ -152,7 +152,7 @@ services:
     class: \Drupal\acquia_migrate\EventSubscriber\HttpApiResponseValidator
     arguments:
       - '@logger.channel.acquia_migrate'
-      - '@app.root'
+      - '%app.root%'
     calls:
       - [setValidator, []]
     tags:

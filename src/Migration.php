@@ -100,6 +100,26 @@ final class Migration {
   protected $dependencies;
 
   /**
+   * Serialization-only shim for $migrationPlugins.
+   *
+   * @var string[]
+   *
+   * @see ::__sleep()
+   * @see ::__wakeup()
+   */
+  protected $_migrationPlugins;
+
+  /**
+   * Serialization-only shim for $dependencies.
+   *
+   * @var array
+   *
+   * @see ::__sleep()
+   * @see ::__wakeup()
+   */
+  protected $_dependencies;
+
+  /**
    * List of migration plugin instances, keyed by ID, sorted by execution order.
    *
    * Executing this migration requires executing these migration plugins, in

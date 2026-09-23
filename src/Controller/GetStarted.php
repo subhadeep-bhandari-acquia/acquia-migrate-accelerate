@@ -276,8 +276,8 @@ final class GetStarted extends ControllerBase {
           'description' => [
             '#markup' => $this->formatPlural(
               count($missing_lines_to_add),
-              "The source site was configured to store public or private files on S3 File System. In Drupal 9, this configuration is stored in settings.php. You should add the following line to settings.php: \n@settings-to-add",
-              "The source site was configured to store public or private files on S3 File System. In Drupal 9, this configuration is stored in settings.php. You should add the following lines to settings.php: \n@settings-to-add",
+              "The source site was configured to store public or private files on S3 File System. On the destination site, this configuration is stored in settings.php. You should add the following line to settings.php: \n@settings-to-add",
+              "The source site was configured to store public or private files on S3 File System. On the destination site, this configuration is stored in settings.php. You should add the following lines to settings.php: \n@settings-to-add",
               [
                 '@settings-to-add' => implode("\n", $missing_lines_to_add),
               ]
@@ -300,7 +300,7 @@ final class GetStarted extends ControllerBase {
           ],
         ],
         'description' => [
-          '#markup' => '<em>Acquia Migrate Accelerate</em> will automatically import all of your sources site\'s content types and fields. On this page, you\'ll be able to choose which parts of your source site that you want to migrate into your new Drupal 9 site. Don\'t worry, you can still choose to bring over anything later that you skip now.',
+          '#markup' => '<em>Acquia Migrate Accelerate</em> will automatically import all of your sources site\'s content types and fields. On this page, you\'ll be able to choose which parts of your source site that you want to migrate into your new destination site. Don\'t worry, you can still choose to bring over anything later that you skip now.',
         ],
       ],
     ];
@@ -499,7 +499,7 @@ final class GetStarted extends ControllerBase {
             and editing Drupal sites. It dramatically improves the process for developers, designers and marketers. Developers create components
             and make them accessible to non-technical users in a drag and drop interface. Designers and marketers can quickly use those components
             to create or modify pages — without touching any code.</p>
-            <p>When migrating from Drupal 7 to Drupal 9, a new theme must be created by front-end developers anyway, so why not use this opportunity
+            <p>When migrating from Drupal 7 to a modern Drupal release, a new theme must be created by front-end developers anyway, so why not use this opportunity
             to empower your marketing team to build better-looking landing pages faster than ever before?</p>
             <p>Best of all: this is <strong>already included</strong> in your Acquia Cloud subscription 🚀 Reach out to your account manager to learn more.</p>
             <!-- @todo Point to -->
@@ -576,7 +576,7 @@ At the heart of component design is the philosophy: Create once, use many.</p>
       <a class="resource-card" href="https://www.drupal.org/docs/theming-drupal">
         <article>
           <h3>DIY: Port the theme yourself</h3>
-          <p>drupal.org has lots of resources covering theming in Drupal 9! It covers everything from the new <code>*.info.yml</code> files to the vastly improved asset library system, granular overrides, all things Twig, subthemes based on the <q>Stable</q> or <q>Classy</q> base themes in core, breakpoints, and much more.</p>
+          <p>drupal.org has lots of resources covering modern Drupal theming! It covers everything from the new <code>*.info.yml</code> files to the vastly improved asset library system, granular overrides, all things Twig, subthemes based on the core base themes, breakpoints, and much more.</p>
           <span class="read-more">Read more</span>
         </article>
       </a>

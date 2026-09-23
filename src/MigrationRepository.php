@@ -41,6 +41,13 @@ class MigrationRepository {
   const CID = 'acquia_migrate__migration_repository';
 
   /**
+   * The migration clusterer service.
+   *
+   * @var \Drupal\acquia_migrate\Clusterer\MigrationClusterer
+   */
+  protected $clusterer;
+
+  /**
    * The database connection.
    *
    * @var \Drupal\Core\Database\Connection

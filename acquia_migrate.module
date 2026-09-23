@@ -28,6 +28,30 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 
 /**
+ * Implements hook_page_top().
+ *
+ * The dashboard's SPA (built from a prebuilt, non-editable bundle) fetches
+ * the stale-data link automatically on every page load; it has no clickable
+ * "check now" element. This adds one as a plain server-rendered link above
+ * the SPA root, so there's a real UI affordance for triggering an immediate
+ * check without waiting for the ten-minute auto-recommend cadence.
+ *
+ * @see \Drupal\acquia_migrate\Controller\HttpApi::checkForUpdates()
+ * @see \Drupal\acquia_migrate\MigrationFingerprinter::recomputeRecommended()
+ */
+function acquia_migrate_page_top(array &$page_top) {
+  if (\Drupal::routeMatch()->getRouteName() !== 'acquia_migrate.migrations.dashboard') {
+    return;
+  }
+  $page_top['acquia_migrate_check_for_updates'] = [
+    '#type' => 'link',
+    '#title' => t('Check for updates now'),
+    '#url' => Url::fromRoute('acquia_migrate.check_for_updates'),
+    '#attributes' => ['class' => ['button', 'button--small']],
+  ];
+}
+
+/**
  * Implements hook_toolbar().
  */
 function acquia_migrate_toolbar() {
@@ -309,9 +333,14 @@ function acquia_migrate_module_implements_alter(&$implementations, $hook) {
       $skipped_crons_implementations = array_diff(array_keys($implementations), $allowed_crons);
       if (!empty($skipped_crons_implementations)) {
         $implementations = array_intersect_key($implementations, array_flip($allowed_crons));
-        \Drupal::logger('acquia_migrate')->log(RfcLogLevel::DEBUG, 'hook_cron() implementations were skipped because Acquia Migrate Accelerate is enabled. The affected modules are: @module-list.', [
-          '@module-list' => implode(',', $skipped_crons_implementations),
-        ]);
+        // Drupal 11's hook collector pass invokes this hook during container
+        // compilation, before the container exists, so logging must be
+        // skipped in that context.
+        if (\Drupal::hasContainer()) {
+          \Drupal::logger('acquia_migrate')->log(RfcLogLevel::DEBUG, 'hook_cron() implementations were skipped because Acquia Migrate Accelerate is enabled. The affected modules are: @module-list.', [
+            '@module-list' => implode(',', $skipped_crons_implementations),
+          ]);
+        }
       }
 
     case 'migration_plugins_alter':

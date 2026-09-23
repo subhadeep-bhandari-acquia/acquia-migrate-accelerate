@@ -411,7 +411,12 @@ final class MigrationAlterer {
       // @see \Drupal\field\Entity\FieldStorageConfig::$persist_with_no_fields
       if ($migration_data['destination']['plugin'] === 'entity:field_storage_config') {
         $process_plugins = $migration_data['process'] ?? [];
-        assert(!array_key_exists('persist_with_no_fields', $process_plugins));
+        if (array_key_exists('persist_with_no_fields', $process_plugins)) {
+          // Already applied: hook_migration_plugins_alter() implementations
+          // can be invoked more than once per request against the same
+          // migration definition, so this must be idempotent.
+          continue;
+        }
         $migration_data['source']['constants']['persist_with_no_fields'] = TRUE;
         $migration_data['process']['persist_with_no_fields'] = 'constants/persist_with_no_fields';
       }

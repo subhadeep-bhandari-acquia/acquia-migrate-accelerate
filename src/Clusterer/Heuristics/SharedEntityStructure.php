@@ -10,7 +10,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\migrate\Plugin\Migration as MigrationPlugin;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -20,7 +19,6 @@ final class SharedEntityStructure implements IndependentHeuristicInterface, Heur
 
   use EntityRelatedHeuristicTrait;
   use StringTranslationTrait;
-  use ContainerAwareTrait;
 
   /**
    * IDs of migration source plugins that should land in Media shared structure.
@@ -162,6 +160,11 @@ final class SharedEntityStructure implements IndependentHeuristicInterface, Heur
     $destination_definition = $this->entityTypeManager->getDefinition($expected_destination_entity_type, FALSE);
     $entity_type_has_bundles = $destination_definition && $destination_definition->getBundleEntityType() !== NULL;
     $dependencies = $migration_plugin->getMetadata('after');
+    // A "shared structure" migration may legitimately depend on the
+    // migration that creates the entity type's own bundles (e.g.
+    // d7_node_type for nodes): that is merely an ordering dependency to
+    // ensure bundles exist, not a per-bundle split of this migration.
+    $dependencies = array_diff($dependencies, ['d7_' . $source_entity_type . '_type']);
     // Some field types are only enabled conditionally. We do not consider the
     // migration plugins that enable those field types dependencies *if*
     // have a dedicated cluster of their own that is listed before this cluster
@@ -198,8 +201,8 @@ final class SharedEntityStructure implements IndependentHeuristicInterface, Heur
     // Rather than automatically generating a label for Paragraphs, Field
     // Collection or Multifield migrations, create these manually to ensure they
     // each get their own shared structure migration. (Otherwise there would
-    // only be one, since both end up getting migrated into Paragraphs in
-    // Drupal 9.)
+    // only be one, since both end up getting migrated into Paragraphs on
+    // the destination site.)
     if (
       $field_entity_type_id === 'field_collection_item' ||
       $source_config['plugin'] === 'd7_pm_field_collection_type' || $source_config['plugin'] === 'd7_field_collection_type'

@@ -299,7 +299,9 @@ final class MigrationFingerprinter {
 
     $query_string = sprintf('CHECKSUM TABLE %s', implode(', ', $escaped_tables));
     try {
-      $statement = $database->query($query_string, [], ['return' => Database::RETURN_STATEMENT]);
+      // Drupal\Core\Database\Database::RETURN_STATEMENT was removed after
+      // Drupal 9; Connection::query() always returns a statement now.
+      $statement = $database->query($query_string);
     }
     catch (\Throwable $e) {
       $statement = NULL;

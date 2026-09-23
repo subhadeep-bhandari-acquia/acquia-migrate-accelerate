@@ -14,8 +14,8 @@ use Drupal\Core\StringTranslation\TranslationInterface;
  * Class ModuleAuditor.
  *
  * Provides information about a source site's modules and provides
- * recommendations for Drupal 9 modules and packages required to migrate the
- * source site.
+ * recommendations for modern Drupal modules and packages required to migrate
+ * the source site.
  *
  * @internal
  */

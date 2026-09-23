@@ -23,7 +23,7 @@ trait AcquiaMigrateHttpExceptionTrait {
    * {@inheritdoc}
    */
   public function getHttpResponse(): Response {
-    return JsonResponse::create($this->getErrorDocument(), $this->getStatusCode(), $this->getHeaders());
+    return new JsonResponse($this->getErrorDocument(), $this->getStatusCode(), $this->getHeaders());
   }
 
   /**
